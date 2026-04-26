@@ -45,7 +45,7 @@ jobs:
         name: flask-app
         path: build/
 
-  deploy-staging:
+deploy-staging:
     needs: build-test
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
@@ -56,16 +56,14 @@ jobs:
       with:
         name: flask-app
 
-    - name: Deploy to Staging Server
-      run: |
-        echo "Deploying to staging..."
-        # Example: SSH deploy
-         scp -r * user@staging-server:/staging-deployment
-
-      env:
-        STAGING_HOST: ${{ secrets.STAGING_HOST }}
-        STAGING_USER: ${{ secrets.STAGING_USER }}
-        STAGING_KEY: ${{ secrets.STAGING_KEY }}
+    - name: Deploy to Staging EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_KEY }}
+        source: "."
+        target: "/home/ubuntu/staging-deployment"
 
   deploy-production:
     needs: build-test
