@@ -60,7 +60,7 @@ jobs:
       run: |
         echo "Deploying to staging..."
         # Example: SSH deploy
-        # scp -r * user@staging-server:/var/www/app
+        scp -r * user@staging-server:/staging-deployment
 
       env:
         STAGING_HOST: ${{ secrets.STAGING_HOST }}
