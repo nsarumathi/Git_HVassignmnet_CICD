@@ -1,0 +1,90 @@
+name: Flask CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  release:
+    types: [created]
+
+jobs:
+
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Tests
+      run: |
+        pytest
+
+    - name: Build Artifact
+      run: |
+        mkdir ../staging_dir
+        # Copy everything except the hidden .git folder to a sibling directory
+        rsync -av --exclude='.git' . ../staging_dir/
+        # Move it back to 'build'
+        mv ../staging_dir build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: flask-app
+        path: build/
+
+  deploy-staging:
+    needs: build-test
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: flask-app
+
+    - name: Deploy to Staging Server
+      run: |
+        echo "Deploying to staging..."
+        # Example: SSH deploy
+        # scp -r * user@staging-server:/var/www/app
+
+      env:
+        STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        STAGING_USER: ${{ secrets.STAGING_USER }}
+        STAGING_KEY: ${{ secrets.STAGING_KEY }}
+
+  deploy-production:
+    needs: build-test
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: flask-app
+
+    - name: Deploy to Production Server
+      run: |
+        echo "Deploying to production..."
+        # Example deployment
+        # scp -r * user@prod-server:/var/www/app
+
+      env:
+        PROD_HOST: ${{ secrets.PROD_HOST }}
+        PROD_USER: ${{ secrets.PROD_USER }}
+        PROD_KEY: ${{ secrets.PROD_KEY }}
