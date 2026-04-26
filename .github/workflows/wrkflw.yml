@@ -74,4 +74,4 @@ jobs:
     - name: Deploy to Production Server
       run: |
         echo "Deploying to production..."
-        # scp -o StrictHostKeyChecking=no -r . ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/home/ubuntu/production-deployment
+        scp -o StrictHostKeyChecking=no -r . ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/home/ubuntu/production-deployment
