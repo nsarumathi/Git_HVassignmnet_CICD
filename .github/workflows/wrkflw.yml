@@ -45,25 +45,47 @@ jobs:
         name: flask-app
         path: build/
 
-   deploy-staging:
-      needs: build-test
-      if: github.ref == 'refs/heads/staging'
-      runs-on: ubuntu-latest
-  
-      steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: flask-app
-  
-      - name: Deploy to Staging EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_KEY }}
-          source: "."
-          target: "/home/ubuntu/staging-deployment"
+deploy-staging:
+
+    needs: build-test
+
+    if: github.ref == 'refs/heads/staging'
+
+    runs-on: ubuntu-latest
+
+
+
+    steps:
+
+    - name: Download Artifact
+
+      uses: actions/download-artifact@v4
+
+      with:
+
+        name: flask-app
+
+
+
+    - name: Deploy to Staging Server
+
+      run: |
+
+        echo "Deploying to staging..."
+
+        # Example: SSH deploy
+
+        run: "scp -o StrictHostKeyChecking=no -r . ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/home/ubuntu/staging-deployment"
+
+
+
+      env:
+
+        STAGING_HOST: ${{ secrets.STAGING_HOST }}
+
+        STAGING_USER: ${{ secrets.STAGING_USER }}
+
+        STAGING_KEY: ${{ secrets.STAGING_KEY }}
 
   deploy-production:
     needs: build-test
