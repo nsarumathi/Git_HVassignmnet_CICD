@@ -33,9 +33,11 @@ jobs:
 
     - name: Build Artifact
       run: |
-        echo "Build step (optional for Flask)"
-        mkdir build
-        cp -r * build/
+        mkdir ../staging_dir
+        # Copy everything except the hidden .git folder to a sibling directory
+        rsync -av --exclude='.git' . ../staging_dir/
+        # Move it back to 'build'
+        mv ../staging_dir build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
