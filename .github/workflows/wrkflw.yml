@@ -9,10 +9,8 @@ on:
     types: [created]
 
 jobs:
-
   build-test:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -28,15 +26,12 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Tests
-      run: |
-        pytest
+      run: pytest
 
     - name: Build Artifact
       run: |
         mkdir ../staging_dir
-        # Copy everything except the hidden .git folder to a sibling directory
         rsync -av --exclude='.git' . ../staging_dir/
-        # Move it back to 'build'
         mv ../staging_dir build
 
     - name: Upload Artifact
@@ -49,29 +44,27 @@ jobs:
     needs: build-test
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:
         name: flask-app
 
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.STAGING_KEY }}
+        known_hosts: unnecessary_with_strict_checking_off
+
     - name: Deploy to Staging Server
       run: |
         echo "Deploying to staging..."
-        # Example: SSH deploy
-        scp -r * user@staging-server:/staging-deployment
-
-      env:
-        STAGING_HOST: ${{ secrets.STAGING_HOST }}
-        STAGING_USER: ${{ secrets.STAGING_USER }}
-        STAGING_KEY: ${{ secrets.STAGING_KEY }}
+        scp -o StrictHostKeyChecking=no -r . ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/home/ubuntu/staging-deployment
 
   deploy-production:
     needs: build-test
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v4
@@ -81,10 +74,4 @@ jobs:
     - name: Deploy to Production Server
       run: |
         echo "Deploying to production..."
-        # Example deployment
-        # scp -r * user@prod-server:/var/www/app
-
-      env:
-        PROD_HOST: ${{ secrets.PROD_HOST }}
-        PROD_USER: ${{ secrets.PROD_USER }}
-        PROD_KEY: ${{ secrets.PROD_KEY }}
+        # scp -o StrictHostKeyChecking=no -r . ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/home/ubuntu/production-deployment
